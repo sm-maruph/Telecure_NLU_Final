@@ -4,6 +4,7 @@ import dill, re
 from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
 from indicnlp.tokenize import indic_tokenize
 import logging
+import joblib
 
 # 🧠 Step 1: Setup Bengali Preprocessor
 factory = IndicNormalizerFactory()
@@ -20,10 +21,9 @@ def bn_tokenizer(text):
     return indic_tokenize.trivial_tokenize(text)
 
 # 🧠 Step 2: Load Model
-dill.settings['recurse'] = True
 try:
-    with open("nlu_pipeline_model.pkl", "rb") as f:
-        vectorizer, model = dill.load(f)
+    model = joblib.load("nlu_pipeline_model.joblib")
+    print("✅ Model loaded successfully.")
 except Exception as e:
     print(f"❌ Model load failed: {e}")
     raise RuntimeError("Cannot start API without model")
