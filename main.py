@@ -5,6 +5,7 @@ from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
 from indicnlp.tokenize import indic_tokenize
 import logging
 import joblib
+from preprocessing import bn_preprocess, bn_tokenizer
 
 # 🧠 Step 1: Setup Bengali Preprocessor
 factory = IndicNormalizerFactory()
