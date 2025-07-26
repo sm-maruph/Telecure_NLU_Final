@@ -1,27 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import dill, re
-from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
-from indicnlp.tokenize import indic_tokenize
 import logging
 import joblib
-from preprocessing import bn_preprocess, bn_tokenizer
+from preprocessing import bn_preprocess, bn_tokenizer  # keep if you want for other uses
 
-# 🧠 Step 1: Setup Bengali Preprocessor
-factory = IndicNormalizerFactory()
-normalizer = factory.get_normalizer("bn")
+app = Flask(__name__)
+CORS(app)
+logging.basicConfig(level=logging.DEBUG)
 
-def bn_preprocess(text):
-    txt = normalizer.normalize(text)
-    txt = txt.lower()
-    txt = re.sub(r"[^\u0980-\u09FF\s]", "", txt)
-    return txt
-
-# 🧠 Optional (if needed for training or future model): Bengali tokenizer
-def bn_tokenizer(text):
-    return indic_tokenize.trivial_tokenize(text)
-
-# 🧠 Step 2: Load Model
+# Load the full pipeline model
 try:
     model = joblib.load("nlu_pipeline_model.joblib")
     print("✅ Model loaded successfully.")
@@ -29,59 +16,24 @@ except Exception as e:
     print(f"❌ Model load failed: {e}")
     raise RuntimeError("Cannot start API without model")
 
-# 🧠 Step 3: Define Intent Map (Response + Route)
+# Intent map
 intent_map = {
-    "find_doctor": {
-        "response": "ডাক্তার দেখাও",
-        "url": "/find"
-    },
-    "prescriptions": {
-        "response": "প্রেসক্রিপশন দেখাও",
-        "url": "/dashboard/user/pres"
-    },
-    "home": {
-        "response": "হোমপেজে ফিরে যাও",
-        "url": "/"
-    },
-    "appointment": {
-        "response": "অ্যাপয়েন্টমেন্ট দিন",
-        "url": "/dashboard/user/appointment"
-    },
-    "medicines": {
-        "response": "ঔষধ তালিকা",
-        "url": "/dashboard/user/medicines"
-    },
-    "my_report": {
-        "response": "আমার রিপোর্ট",
-        "url": "/dashboard/user/report"
-    },
-    "my_booking": {
-        "response": "আমার বুকিং",
-        "url": "/dashboard/user/bookings"
-    },
-    "edit_profile": {
-        "response": "প্রোফাইল এডিট করো",
-        "url": "/dashboard/user/settings"
-    },
-    "join_call": {
-        "response": "কল জয়েন করো",
-        "url": "/dashboard/user/meeting"
-    },
-    "back": {
-        "response": "পিছনে যাও",
-        "url": "back"
-    }
+    "find_doctor": {"response": "ডাক্তার দেখাও", "url": "/find"},
+    "prescriptions": {"response": "প্রেসক্রিপশন দেখাও", "url": "/dashboard/user/pres"},
+    "home": {"response": "হোমপেজে ফিরে যাও", "url": "/"},
+    "appointment": {"response": "অ্যাপয়েন্টমেন্ট দিন", "url": "/dashboard/user/appointment"},
+    "medicines": {"response": "ঔষধ তালিকা", "url": "/dashboard/user/medicines"},
+    "my_report": {"response": "আমার রিপোর্ট", "url": "/dashboard/user/report"},
+    "my_booking": {"response": "আমার বুকিং", "url": "/dashboard/user/bookings"},
+    "edit_profile": {"response": "প্রোফাইল এডিট করো", "url": "/dashboard/user/settings"},
+    "join_call": {"response": "কল জয়েন করো", "url": "/dashboard/user/meeting"},
+    "back": {"response": "পিছনে যাও", "url": "back"}
 }
 
-
-app = Flask(__name__)
-CORS(app)
-logging.basicConfig(level=logging.DEBUG)
 @app.route("/")
 def hello_world():
-    return "<p> Hellow world!</p>"
+    return "<p>Hello world!</p>"
 
-# 🔍 Step 4: Predict Intent Endpoint
 @app.route("/predict", methods=["POST"])
 def predict_intent():
     if not request.is_json:
@@ -94,11 +46,10 @@ def predict_intent():
         return jsonify({"error": "No input provided"}), 400
 
     try:
-        cleaned = bn_preprocess(message)
-        vector = vectorizer.transform([cleaned])
-        intent = model.predict(vector)[0]
+        # Directly use the pipeline to predict
+        intent = model.predict([message])[0]
 
-        print(f"📥 Received: '{message}' → 🧹 Cleaned: '{cleaned}' → 🎯 Intent: '{intent}'")
+        print(f"📥 Received: '{message}' → 🎯 Intent: '{intent}'")
 
         intent_data = intent_map.get(intent)
         if not intent_data:
