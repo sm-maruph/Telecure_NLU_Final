@@ -18,7 +18,7 @@ except Exception as e:
 
 # Intent map
 intent_map = {
-    "find_doctor": {"response": "ডাক্তার দেখাও", "url": "/find"},
+    "find_doctor": {"response": "ডাক্তার দেখাও", "url": "/dashboard/find"},
     "prescriptions": {"response": "প্রেসক্রিপশন দেখাও", "url": "/dashboard/user/pres"},
     "home": {"response": "হোমপেজে ফিরে যাও", "url": "/"},
     "appointment": {"response": "অ্যাপয়েন্টমেন্ট দিন", "url": "/dashboard/user/appointment"},
